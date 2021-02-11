@@ -10,9 +10,9 @@ let interval = 1 * 3600 * 1000; // 1 hour
 const custom = settings.ep_pad_ttl;
 
 if (custom) {
-  ttl = custom.ttl || ttl;
-  timeout = custom.timeout || timeout;
-  interval = custom.interval || interval;
+  ttl = custom.ttl ? custom.ttl * 1000 : ttl;
+  timeout = custom.timeout ? custom.timeout * 1000 : timeout;
+  interval = custom.interval ? custom.interval * 1000 : interval;
 }
 
 const flush = (padID) => {
