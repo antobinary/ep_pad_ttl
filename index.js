@@ -1,7 +1,10 @@
 const API = require('ep_etherpad-lite/node/db/API');
+const db = require('ep_etherpad-lite/node/db/DB');
 const padManager = require('ep_etherpad-lite/node/db/PadManager');
 const padMessageHandler = require('ep_etherpad-lite/node/handler/PadMessageHandler');
 const settings = require('ep_etherpad-lite/node/utils/Settings');
+
+const AUTHOR = 'globalAuthor';
 
 let ttl = 6 * 3600 * 1000; // 6 hours
 let timeout = 5 * 1000; // 5 seconds
@@ -15,12 +18,19 @@ if (custom) {
   interval = custom.interval ? custom.interval * 1000 : interval;
 }
 
-const flush = (padID) => {
+const flush = async (padID) => {
   console.debug(`[ep_pad_ttl] flushing ${padID}`);
-  padMessageHandler.kickSessionsFromPad(padID);
-  API.deletePad(padID).then(() => {
-    console.info(`[ep_pad_ttl] ${padID} deleted`);
-    padManager.removePad(padID);
+  API.listAuthorsOfPad(padID).then(response => {
+    if (response && response.authorIDs) {
+      const { authorIDs } = response;
+      API.deletePad(padID).then(() => {
+        console.info(`[ep_pad_ttl] ${padID} deleted`);
+        const promises = authorIDs.map(authorID => db.remove(`${AUTHOR}:${authorID}`));
+        Promise.all(promises).then(() => {
+          console.debug(`[ep_pad_ttl] removed authors ${authorIDs} from ${padID}`);
+        }).catch(e => console.error(`[ep_pad_ttl] ${e}`));
+      }).catch(e => console.error(`[ep_pad_ttl] ${e}`));
+    }
   }).catch(e => console.error(`[ep_pad_ttl] ${e}`));
 };
 
