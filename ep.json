@@ -3,7 +3,7 @@
     {
       "name": "ep_pad_ttl",
       "hooks": {
-        "expressConfigure" : "ep_pad_ttl/init"
+        "expressConfigure" : "ep_pad_ttl/index:init"
       }
     }
   ]
